@@ -45,6 +45,8 @@ exports.updateProduct = catchAsync(async function (req, res, next) {
       title: req.body.title,
       price: req.body.price,
     },
+
+    { new: true },
   );
 
   res.status(200).json({
@@ -62,3 +64,13 @@ exports.deleteProduct = catchAsync(async function (req, res, next) {
     message: "Succefully deleted the product",
   });
 });
+
+exports.restrictTo = (user, ...roles) =>
+  function (req, res, next) {
+    if (!roles.includes(user))
+      return next(
+        new AppError("You can't create a product try become a selle", 403),
+      );
+
+    next();
+  };

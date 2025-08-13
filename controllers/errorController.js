@@ -4,13 +4,16 @@ const env = process.env.NODE_ENV;
 
 function handleDuplicateData() {
   const message = "You can't have duplicate data for the title of the product";
-
   return new AppError(message, 403);
 }
 
 function handleCastError(err) {
   const message = `No product found for this item with id: ${err.value}`;
+  return new AppError(message, 404);
+}
 
+function handleValidationError(err) {
+  const message = `${err.message}`;
   return new AppError(message, 404);
 }
 
@@ -18,6 +21,8 @@ function sendDevError(err, res) {
   res.status(err.statusCode).json({
     status: err.status,
     err,
+    isOperational: err.isOperational,
+    stack: err.stack,
   });
 }
 
@@ -40,6 +45,7 @@ module.exports = (err, req, res, next) => {
 
     if (err.code === 11000) error = handleDuplicateData(err);
     if (err.name === "CastError") error = handleCastError(err);
+    if (err.name === "ValidationError") error = handleValidationError(err);
 
     prodError(error, res);
   }
