@@ -3,6 +3,7 @@ const AppError = require("../utils/AppError");
 const catchAsync = require("../utils/catchAsync");
 
 exports.getAllProducts = catchAsync(async function (req, res, next) {
+  console.log(req.user);
   const products = await Product.find({});
 
   res.status(200).json({

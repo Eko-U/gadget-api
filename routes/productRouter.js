@@ -7,10 +7,11 @@ const {
   updateProduct,
   restrictTo,
 } = require("../controllers/productController");
+const { protect } = require("../controllers/authController");
 
 const router = express.Router();
 
-router.route("/").get(getAllProducts);
+router.route("/").get(protect, getAllProducts);
 // .post(restrictTo("buyer", "seller", "admin"), createProduct);
 
 router.route("/:productId").get(getProduct);

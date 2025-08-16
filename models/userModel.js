@@ -23,6 +23,7 @@ const userSchema = new Schema({
     type: String,
     required: true,
     min: [8, "Please password must be equal to or greater than 8"],
+    select: false,
   },
 
   confirmPassword: {
@@ -68,6 +69,8 @@ const userSchema = new Schema({
 });
 
 userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next();
+
   const saltRounds = 10;
   const hashPassword = await bcrypt.hash(this.password, saltRounds);
 
