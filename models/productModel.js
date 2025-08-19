@@ -22,7 +22,7 @@ const productSchema = new Schema({
     ref: "user",
   },
 
-  image_url: {
+  imageUrl: {
     type: String,
   },
 });

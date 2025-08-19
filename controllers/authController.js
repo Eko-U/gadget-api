@@ -6,6 +6,27 @@ const bcrypt = require("bcryptjs");
 
 const crypto = require("crypto");
 
+const nodemailer = require("nodemailer");
+
+async function email(to, subject, text, html) {
+  const transporter = nodemailer.createTransport({
+    host: "smtp.ethereal.email",
+    port: 587,
+    auth: {
+      user: "rusty32@ethereal.email",
+      pass: "pJHCCsARDCKHAWXKEM",
+    },
+  });
+
+  await transporter.sendMail({
+    from: "rusty32@ethereal.email",
+    to,
+    subject,
+    text,
+    html,
+  });
+}
+
 exports.signup = catchAsync(async function (req, res, next) {
   const user = await User({
     name: req.body.name,
@@ -14,6 +35,12 @@ exports.signup = catchAsync(async function (req, res, next) {
     confirmPassword: req.body.confirmPassword,
     role: req.body.role,
   });
+
+  await email(
+    req.body.email,
+    "Welcome to AccessMoreGadgets",
+    `${req.body.name}, Welcome to AccessMoreGadgets.\n The only sure plug when it comes to gadgets`,
+  );
 
   await user.save();
 
@@ -35,7 +62,7 @@ exports.login = catchAsync(async function (req, res, next) {
 
   const user = await User.findOne({
     email: req.body.email,
-  });
+  }).select("+password");
 
   if (!user)
     return next(new AppError(`User not found for this ${req.body.email}`, 404));
@@ -97,12 +124,18 @@ exports.forgotPassword = catchAsync(async function (req, res, next) {
   user.passwordResetToken = hashToken;
   user.passwordResetExpires = Date.now() + 60 * 10 * 1000;
 
+  await email(
+    req.body.email,
+    "Reset Your Password",
+    `${req.body.name}, Do you want to reset your password?.\n <a href=${`127.0.0.1:5000/api/v1/users/resetPassword/${token}`}>${`127.0.0.1:5000/api/v1/users/resetPassword/${token}`}</a>`,
+  );
+
   await user.save({ validateBeforeSave: false });
 
   res.status(200).json({
     status: "success",
     message: "Sent URL to your mail",
-    URL: `127.0.0.1:5000/api/v1/users/resetPassword/token=${token}`,
+    URL: `127.0.0.1:5000/api/v1/users/resetPassword/${token}`,
   });
 });
 
@@ -124,6 +157,12 @@ exports.resetPassword = catchAsync(async function (req, res, next) {
     user.passwordResetToken = undefined;
 
     user.save({ validateBeforeSave: true });
+
+    await email(
+      user.email,
+      "Successfully reset your password",
+      `${req.name}, your password is reseted successfully. Please login again to your account with your new password`,
+    );
   }
 
   res.status(200).json({

@@ -1,9 +1,10 @@
+const multer = require("multer");
 const Product = require("../models/productModel");
 const AppError = require("../utils/AppError");
 const catchAsync = require("../utils/catchAsync");
+const supabase = require("../supabase");
 
 exports.getAllProducts = catchAsync(async function (req, res, next) {
-  console.log(req.user);
   const products = await Product.find({});
 
   res.status(200).json({
@@ -13,11 +14,35 @@ exports.getAllProducts = catchAsync(async function (req, res, next) {
   });
 });
 
+/** UPLOAD OF PRODUCT IMAGE */
+
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
+exports.uploadProductPhoto = upload.single("image_url");
+
 exports.createProduct = catchAsync(async function (req, res, next) {
+  const filename = `${Date.now()}-${Math.random()}-${req.file.originalname}`;
+
+  const productImage = req.file.buffer;
+
+  const { data, error } = await supabase.storage
+    .from("products")
+    .upload(filename, productImage, {
+      contentType: req.file.mimetype,
+      upsert: false,
+    });
+
+  if (error) return next(new AppError("Product image could not upload", 500));
+
+  const { data: publicUrl } = supabase.storage
+    .from("products")
+    .getPublicUrl(filename);
+
   const product = await Product.create({
     title: req.body.title,
     description: req.body.description,
     price: req.body.price,
+    imageUrl: publicUrl.publicUrl,
   });
 
   res.status(200).json({
@@ -66,9 +91,9 @@ exports.deleteProduct = catchAsync(async function (req, res, next) {
   });
 });
 
-exports.restrictTo = (user, ...roles) =>
+exports.restrictTo = (...roles) =>
   function (req, res, next) {
-    if (!roles.includes(user))
+    if (!roles.includes(req.user.role))
       return next(
         new AppError("You can't create a product try become a selle", 403),
       );

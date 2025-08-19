@@ -6,13 +6,21 @@ const {
   deleteProduct,
   updateProduct,
   restrictTo,
+  uploadProductPhoto,
 } = require("../controllers/productController");
 const { protect } = require("../controllers/authController");
 
 const router = express.Router();
 
-router.route("/").get(protect, getAllProducts);
-// .post(restrictTo("buyer", "seller", "admin"), createProduct);
+router
+  .route("/")
+  .get( getAllProducts)
+  .post(
+    protect,
+    restrictTo("buyer", "seller", "admin"),
+    uploadProductPhoto,
+    createProduct,
+  );
 
 router.route("/:productId").get(getProduct);
 // .patch(restrictTo("seller", "seller", "admin"), updateProduct)

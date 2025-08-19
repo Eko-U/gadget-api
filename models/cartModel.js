@@ -1,25 +1,32 @@
 const mongoose = require("mongoose");
+const Product = require("./productModel");
 
 const { Schema, model } = mongoose;
 
 const CartSchema = new Schema({
   buyer_id: {
     type: Schema.Types.ObjectId,
-    ref: "user",
+    ref: "User",
+    required: true,
+    unique: true,
   },
 
-  status: {
-    type: String,
-    emuns: ["pending", "shipped", "cancelled", "delivered"],
-    default: "pending",
-  },
+  items: [
+    {
+      productId: {
+        type: Schema.Types.ObjectId,
+        ref: "Product",
+        required: true,
+      },
+
+      quantity: { type: Number, default: 1, min: 1 },
+      price: { type: Number, default: 0 },
+    },
+  ],
 
   totalPrice: {
     type: Number,
-  },
-
-  shippingAddress: {
-    type: String,
+    default: 0,
   },
 
   createdAt: {
@@ -32,45 +39,21 @@ const CartSchema = new Schema({
   },
 });
 
-const CartItemSchema = new Schema({
-  orderId: {
-    type: Schema.Types.ObjectId,
-    ref: "order",
-  },
+CartSchema.pre("save", async function (next) {
+  let totalPrice = 0;
 
-  seller_id: {
-    type: Schema.Types.ObjectId,
-    ref: "user",
-  },
+  for (const item of this.items) {
+    const product = await Product.findById(item.productId);
 
-  product_id: {
-    type: Schema.Types.ObjectId,
-    ref: "product",
-  },
+    if (!product) continue;
 
-  quantity: {
-    type: Number,
-  },
+    item.price = product.price * item.quantity;
+    totalPrice += item.price;
+  }
 
-  price: {
-    type: Number,
-  },
-
-  subtotal: {
-    type: Number,
-  },
-
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-
-  updatedAt: {
-    type: Date,
-  },
+  this.totalPrice = totalPrice;
+  next();
 });
 
 const Cart = model("Cart", CartSchema);
-
-exports.CartItem = model("CartItem", CartItemSchema);
 module.exports = Cart;
