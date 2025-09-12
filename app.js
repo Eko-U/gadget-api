@@ -10,15 +10,19 @@ const globalErrors = require("./controllers/errorController");
 
 const app = express();
 
+const cors = require("cors");
+
 app.use(morgan("dev"));
+
+app.use(cors());
 
 app.use(express.static("public"));
 app.use(express.json());
 
 app.use("/api/v1/carts", cartRoutes);
-app.use("/api/v1/orders", orderRoutes);
 app.use("/api/v1/products", productRoutes);
 app.use("/api/v1/users", userRoutes);
+app.use("/api/v1/orders", orderRoutes);
 
 app.use(globalErrors);
 
