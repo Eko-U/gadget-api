@@ -10,6 +10,7 @@ const globalErrors = require("./controllers/errorController");
 
 const app = express();
 
+// so that others can use this
 const cors = require("cors");
 
 app.use(morgan("dev"));
@@ -27,3 +28,4 @@ app.use("/api/v1/orders", orderRoutes);
 app.use(globalErrors);
 
 module.exports = app;
+
